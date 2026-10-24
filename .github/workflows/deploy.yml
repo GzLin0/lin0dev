@@ -1,0 +1,77 @@
+name: Deploy site to Tencent Cloud
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::拿不到 $HOST 的主机公钥，检查 SERVER_HOST 是否正确、22 端口是否可达"
+            exit 1
+          fi
+          echo "SSH 材料就绪"
+
+      - name: Guard target path
+        env:
+          TARGET: ${{ secrets.TARGET_DIR }}
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            ""|/|/srv|/srv/|/home|/home/|/etc|/etc/|/var|/var/|/usr|/usr/|/opt|/opt/)
+              echo "::error::TARGET_DIR 指向系统目录，拒绝执行：$TARGET"
+              exit 1
+              ;;
+          esac
+          depth=$(printf '%s' "$TARGET" | awk -F/ '{print NF-1}')
+          if [ "$depth" -lt 2 ]; then
+            echo "::error::TARGET_DIR 层级过浅，至少要到 /srv/xxx 这种两级：$TARGET"
+            exit 1
+          fi
+          echo "目标目录：$TARGET"
+
+      - name: Rsync site
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+          ACCOUNT: ${{ secrets.SERVER_USER }}
+          TARGET: ${{ secrets.TARGET_DIR }}
+        run: |
+          set -euo pipefail
+          rsync -avz --delete --itemize-changes \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            site/ "$ACCOUNT@$HOST:$TARGET/"
+
+      - name: Verify online
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          set -euo pipefail
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://lin0dev.tech/")
+          echo "线上首页返回 $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::站点未返回 200，部署可能未生效"
+            exit 1
+          fi
