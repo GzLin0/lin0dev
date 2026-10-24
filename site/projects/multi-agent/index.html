@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多智能体协作系统 · 李俊霖</title>
+<meta name="description" content="用四个 Agent 分工协作生成长文分析产出，并用契约、规则引擎、阈值门禁与离线评测保证产出质量。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/projects/" class="active hide-sm">作品</a>
+      <a href="/notes/" class="hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/projects/">作品</a><span class="sep">/</span>多智能体协作系统</div>
+</div>
+
+<header class="hero compact">
+  <div class="wrap">
+    <div class="hero-role">Agent 编排 · LLM 工程化</div>
+    <h1 class="page-title">多智能体协作系统</h1>
+    <p class="hero-sub">
+      用四个角色分工协作生成长篇分析产出，并且<strong>让产出可验证、可复算、可回归</strong>。
+      多 Agent 的价值不在让模型写得更多，在于把一件没法验收的事拆成几件可以验收的事。
+    </p>
+    <div class="hero-meta">
+      <span><i class="dot dim"></i>内部课题，源码不公开</span>
+      <span>Python · LangGraph</span>
+      <span>330 文件</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>一、这是什么</h2>
+    <p>
+      给定一批材料与一个分析目标，系统要产出一份多章节的长文分析。这类任务用单次调用做不好——
+      不是模型不够强，是<strong>一件事里混了太多种性质不同的工作</strong>：有的需要发散，有的需要收敛，
+      有的需要严格遵守口径，有的需要独立复核。
+    </p>
+    <p>
+      所以系统把这件事拆成四个角色，串成一条主流程，每个角色只做一件事：
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>角色</th><th>职责</th><th>为什么单独拆出来</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>planner</strong></td>
+            <td>拆解目标，产出任务与章节结构</td>
+            <td>结构决策与内容生成是两件事。混在一起时，模型会为了好写而改结构</td>
+          </tr>
+          <tr>
+            <td><strong>gov</strong></td>
+            <td>供给事实与约束，按规则核定可写范围</td>
+            <td>约束必须在生成之前给定，事后检查已经来不及</td>
+          </tr>
+          <tr>
+            <td><strong>res</strong></td>
+            <td>按结构产出正文</td>
+            <td>纯生成，不承担判断职责，可以放心让它写</td>
+          </tr>
+          <tr>
+            <td><strong>judge</strong></td>
+            <td>独立复核，判定是否达标</td>
+            <td><strong>复核者必须与生成者分离</strong>——同一个角色既写又评，等于没有评</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted small">
+      角色命名去掉了业务语义，只保留职责类型。这是刻意的：这套编排的形状与具体领域无关，
+      换成任何「给定材料产出长文」的场景都成立。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>二、规模</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">330</div><div class="l">代码文件</div></div>
+      <div class="stat"><div class="n">4</div><div class="l">协作角色</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">阶段门禁</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">组数据契约</div></div>
+      <div class="stat"><div class="n">19 / 6 / 9</div><div class="l">计划 / 规格 / 评审</div></div>
+    </div>
+    <p class="small muted">
+      最后一组数字是文档链：19 篇实施计划、6 份接口规格、9 篇代码评审。
+      它比代码行数更能说明这个项目是怎么推进的——<strong>每一阶段先写规格再写实现，写完再评审</strong>，
+      不是一路写到底。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>三、结构</h2>
+
+    <figure class="diagram-frame">
+      <svg viewBox="0 0 680 400" role="img" aria-label="多智能体协作系统的运行结构图">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"/>
+          </marker>
+          <marker id="ar-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6e7681"/>
+          </marker>
+        </defs>
+
+        <!-- 输入 -->
+        <rect x="20" y="150" width="104" height="56" rx="8" fill="#161b22" stroke="#2d333b"/>
+        <text x="72" y="174" text-anchor="middle" fill="#e6edf3" font-size="13" font-family="sans-serif">材料与目标</text>
+        <text x="72" y="192" text-anchor="middle" fill="#6e7681" font-size="11" font-family="sans-serif">输入</text>
+
+        <!-- planner -->
+        <rect x="168" y="40" width="120" height="52" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+        <text x="228" y="62" text-anchor="middle" fill="#58a6ff" font-size="13" font-family="monospace">planner</text>
+        <text x="228" y="79" text-anchor="middle" fill="#9198a1" font-size="11" font-family="sans-serif">拆解与章节结构</text>
+
+        <!-- gov -->
+        <rect x="168" y="150" width="120" height="52" rx="8" fill="#161b22" stroke="#2d333b"/>
+        <text x="228" y="172" text-anchor="middle" fill="#e6edf3" font-size="13" font-family="monospace">gov</text>
+        <text x="228" y="189" text-anchor="middle" fill="#9198a1" font-size="11" font-family="sans-serif">事实与约束</text>
+
+        <!-- res -->
+        <rect x="168" y="260" width="120" height="52" rx="8" fill="#161b22" stroke="#2d333b"/>
+        <text x="228" y="282" text-anchor="middle" fill="#e6edf3" font-size="13" font-family="monospace">res</text>
+        <text x="228" y="299" text-anchor="middle" fill="#9198a1" font-size="11" font-family="sans-serif">按结构产出正文</text>
+
+        <!-- 规则引擎 -->
+        <rect x="330" y="150" width="132" height="52" rx="8" fill="#1c2128" stroke="#d29922" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="396" y="172" text-anchor="middle" fill="#d29922" font-size="13" font-family="sans-serif">规则引擎</text>
+        <text x="396" y="189" text-anchor="middle" fill="#9198a1" font-size="11" font-family="sans-serif">硬约束 · 不可绕过</text>
+
+        <!-- judge -->
+        <rect x="512" y="150" width="140" height="52" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+        <text x="582" y="172" text-anchor="middle" fill="#58a6ff" font-size="13" font-family="monospace">judge</text>
+        <text x="582" y="189" text-anchor="middle" fill="#9198a1" font-size="11" font-family="sans-serif">独立复核</text>
+
+        <!-- 主流程箭头 -->
+        <line x1="124" y1="178" x2="162" y2="178" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#ar)"/>
+        <path d="M 288 66 L 310 66 L 310 176 L 324 176" fill="none" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="288" y1="176" x2="324" y2="176" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="288" y1="286" x2="310" y2="286" stroke="#d29922" stroke-width="1.2" marker-end="url(#ar-dim)"/>
+        <path d="M 462 176 L 506 176" fill="none" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#ar)"/>
+
+        <!-- res 回环 -->
+        <path d="M 228 312 L 228 348 L 582 348 L 582 208" fill="none" stroke="#6e7681" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ar-dim)"/>
+        <text x="404" y="366" text-anchor="middle" fill="#6e7681" font-size="11" font-family="sans-serif">不达标则回退重生成（带 judge 的修改意见）</text>
+
+        <!-- 契约标注 -->
+        <text x="404" y="30" text-anchor="middle" fill="#6e7681" font-size="11" font-family="sans-serif">阶段之间只传 Pydantic 契约，不传自由文本</text>
+        <line x1="120" y1="38" x2="500" y2="38" stroke="#21262d" stroke-width="1"/>
+      </svg>
+      <figcaption>主流程与硬约束层。规则引擎位于生成路径之外，模型无法绕过——这是这份系统里最重要的一个结构决定。</figcaption>
+    </figure>
+
+    <p>
+      三条设计要点，每条都对应一个具体的失败场景：
+    </p>
+    <ul class="rules">
+      <li><span class="k">契约驱动</span><span>阶段之间只传结构化的 Pydantic 对象，不传自由文本。原因是自由文本传递会让错误静默传播——上游写歪了，下游读不出来，最后表现为一份看起来通顺但结论错的产出。</span></li>
+      <li><span class="k">硬约束独立</span><span>规则引擎不在模型内部，也不在 prompt 里，而是一个独立层。<strong>写进 prompt 的约束是建议，写进代码的约束才是约束。</strong></span></li>
+      <li><span class="k">复核者分离</span><span>judge 不参与生成，且有自己的判定标准。让生成者自评，实测的结果是评分虚高且不随质量变化。</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>四、评测</h2>
+    <p>
+      这是这个项目与其他多 Agent 实现真正拉开差距的地方。多数同类系统停在「能跑出一份东西」，
+      但<strong>能跑出东西不等于产出变好了</strong>——没有评测，你改一个 prompt 之后甚至不知道是变好还是变坏。
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>组件</th><th>做什么</th><th>解决哪个问题</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>阈值门禁</strong></td>
+            <td>产出必须过一组阈值才允许进入下一阶段</td>
+            <td>拦住「先跑完再说」——不合格的产出流到后期，返工成本翻几倍</td>
+          </tr>
+          <tr>
+            <td><strong>离线 A/B</strong></td>
+            <td>同一批输入跑两个版本，逐项对比打分</td>
+            <td>让「这次改动是不是真的变好了」有答案，而不是靠读几份输出凭感觉</td>
+          </tr>
+          <tr>
+            <td><strong>基线对比</strong></td>
+            <td>与一个固定的基线版本比，不只看绝对分数</td>
+            <td>绝对分数会随任务难度浮动，只有相对基线的变化才说明问题</td>
+          </tr>
+          <tr>
+            <td><strong>基准报告</strong></td>
+            <td>把一轮评测的结果落成可追溯的报告</td>
+            <td>让评测结论可复算——换个时间重跑，能对得上</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p><strong>为什么这件事值得单独做一层。</strong>LLM 的改动效果是非单调的——换个模型、调个温度、改一句 prompt，都可能让某一类任务变好而另一类变坏。没有量化对比，迭代就退化成「我觉得这版好一些」，几轮之后就没人说得清当前版本强在哪。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>五、决策记录</h2>
+
+    <div class="decision">
+      <div class="d-head">为什么规则引擎要独立成层，而不是写进 prompt</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>约束有两类：一类是「最好这样」的倾向，适合放进 prompt；一类是「绝不能这样」的硬边界，必须由代码执行。<strong>把后者交给 prompt，等于把否决权交给一个概率模型。</strong></dd>
+          <dt>放弃了什么</dt>
+          <dd>灵活性。规则引擎要预先枚举被禁止的情形，遇到没枚举到的边界就管不住。而 prompt 式的约束理论上能覆盖没写出来的情况。这个代价是接受的——<strong>明确的边界被严格守住，比模糊的边界被大部分时候守住更有价值。</strong></dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果任务对约束的要求本身是模糊的、需要按情况判断的，硬编码规则会变成枷锁，产出会被压得千篇一律。这种场景下应该把规则降级为「提示 + 事后校验」，而不是前置拦截。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么阶段之间只传契约，不传自由文本</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>自由文本传递会让错误静默传播。上游少写了一个字段，下游读不到也不会报错，只会「合理地」补一个——最后表现为一份通顺但结论错的产出。契约把这类错误变成<strong>立刻失败</strong>，而不是延后暴露。</dd>
+          <dt>放弃了什么</dt>
+          <dd>表达的自由度。强制结构化会丢掉一些细腻的语境信息，某些需要「带着语气传递」的内容会被压平。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>当任务本身是开放式创作、结构无法预先定义时，强行套契约会把产出掐死。判断标准是：<strong>这个阶段的输出是否有一个稳定的骨架</strong>——有就上契约，没有就别硬套。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么把阶段门禁脚本化，而不是靠人工检查</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>七个阶段的产出都要过检，人工检查的必然结果是：前期认真、中期凑合、后期直接跳过。<strong>脚本化的门禁把「要不要放行」变成一个退出码</strong>，不通过就是不放行，没有商量空间。</dd>
+          <dt>放弃了什么</dt>
+          <dd>临场判断。有些时候产出确实「不太合格但足够用」，人工可以放行，脚本只会拒绝。代价是偶尔多做一轮返工。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果验收标准本身还不稳定（比如项目早期还在探索产出应该长什么样），硬门禁会频繁误拦，反而拖慢迭代。所以门禁的标准要随项目成熟度逐步收紧，<strong>一开始就按最终标准卡，会卡死在半路。</strong></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>六、失败与边界</h2>
+
+    <h3>踩过的坑</h3>
+    <ul class="rules">
+      <li><span class="k">契约过严</span><span>早期把契约设计得过细，导致模型为了满足结构而牺牲内容质量——它把精力花在「填满字段」上。后来放宽了非关键字段的必填要求，产出质量反而回升。</span></li>
+      <li><span class="k">回退循环</span><span>judge 判定不达标就回退重生成，早期没有次数上限，遇到模型始终不达标的情况会陷入循环并持续烧调用。加了重试上限与降级路径（附警告放行并标记）才解决。</span></li>
+      <li><span class="k">评测集污染</span><span>拿调试时看过的样本来做评测，分数虚高。后来把评测样本与调试样本分开管理，评测集不参与调参。</span></li>
+    </ul>
+
+    <h3>已知不足</h3>
+    <ul class="rules">
+      <li><span class="k">成本偏高</span><span>四个角色加复核回退，单次产出的大模型调用次数是单次直出的数倍。这是换质量付出的代价，不打算优化掉——但需要按任务复杂度选择是否走完整流程。</span></li>
+      <li><span class="k">评测偏主观</span><span>部分评分维度依赖模型评判，虽然做了与基线的对比，但评判标准本身仍有主观成分。<strong>这是当前最想改进但没找到好办法的一块。</strong></span></li>
+      <li><span class="k">无并发优化</span><span>章节生成是串行的，没有做并行调度。任务量小时影响不大，量大时是明显的瓶颈。</span></li>
+    </ul>
+
+    <div class="note edge">
+      <p><strong>它不适合什么场景。</strong>一次性、短产出、对结构没有要求的任务——用这套流程是过度设计，单次调用更快也更便宜。它的价值只在「产出需要被反复验收与迭代」的地方。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>七、链接与状态</h2>
+    <div class="table-scroll">
+      <table>
+        <tbody>
+          <tr><th>状态</th><td><strong>内部课题项目，源码不公开</strong></td></tr>
+          <tr><th>原因</th><td>单位课题成果，代码与数据受约束；这也是它本来的形态</td></tr>
+          <tr><th>可提供的</th><td>以上全部方法说明、结构图与设计决策；面试中可就具体实现细节展开</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small faint">
+      页面上的所有描述都在公开展示范围内，不含具体业务指标口径、内部数据与原始材料。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

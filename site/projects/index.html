@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作品 · 李俊霖</title>
+<meta name="description" content="四项工程作品的详情：多智能体协作系统、长文结构化生成编排、数据管理平台、模块化后台系统。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/projects/" class="active hide-sm">作品</a>
+      <a href="/notes/" class="hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="crumbs"><a href="/">首页</a><span class="sep">/</span>作品</div>
+</div>
+
+<header class="hero compact">
+  <div class="wrap">
+    <h1 class="page-title">作品</h1>
+    <p class="hero-sub mb0">
+      每一页都按同一个模板写：这是什么、规模多大、结构长什么样、技术要点、
+      <strong>为什么这么选</strong>、<strong>什么情况下会失效</strong>、源码能不能看。
+      后两块是最少人写的，也是最能看出判断力的。
+    </p>
+  </div>
+</header>
+
+<main>
+<section>
+  <div class="wrap">
+    <div class="cards two">
+
+      <a class="card" href="/projects/platform/">
+        <div class="card-top">
+          <span class="card-idx">01</span>
+          <span class="tag live">可体验</span>
+        </div>
+        <h3>城市体检数据管理平台</h3>
+        <p>省级双端生产系统。移动端采集与填报，网页端做指标配置、多层级权限、数据汇聚与批量出表。多级组织树五级联动，真实有人在用。</p>
+        <div class="card-foot">
+          看点：元数据驱动表单 · RBAC 与行级可见性 · 审核状态机 · 生产运维与缺陷修复
+        </div>
+      </a>
+
+      <a class="card" href="/projects/multi-agent/">
+        <div class="card-top">
+          <span class="card-idx">02</span>
+          <span class="tag private">内部项目</span>
+        </div>
+        <h3>多智能体协作系统</h3>
+        <p>四个角色分工协作生成长文分析产出。价值不在写得更多，在产出可验证、可复算、可回归——所以它有一套完整的评测体系。</p>
+        <div class="card-foot">
+          看点：契约驱动 · 独立规则引擎 · 阈值门禁 · 离线 A/B 与基线对比
+        </div>
+      </a>
+
+      <a class="card" href="/projects/longform/">
+        <div class="card-top">
+          <span class="card-idx">03</span>
+          <span class="tag soon">待上线</span>
+        </div>
+        <h3>长文结构化生成编排服务</h3>
+        <p>把多章节长文的生成拆成有依赖的节点图。每章可中断可续写，单章改动只重算下游——这是整个设计里最值得讲的一个决定。</p>
+        <div class="card-foot">
+          看点：章节依赖图 · checkpoint 续写 · 失效传播 · prompt 资产化
+        </div>
+      </a>
+
+      <a class="card" href="/projects/admin/">
+        <div class="card-top">
+          <span class="card-idx">04</span>
+          <span class="tag private">内部项目</span>
+        </div>
+        <h3>模块化后台管理系统</h3>
+        <p>在 2272 文件的既有代码库上做二次开发。难点不是写新功能，是怎么在不破坏既有结构的前提下把扩展点划出来。</p>
+        <div class="card-foot">
+          看点：插件化 manifest · 版本化迁移链 · 三层模块解耦 · 容器化交付
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<section class="no-border">
+  <div class="wrap">
+    <h2>关于这些页面的写法</h2>
+    <div class="note edge">
+      <p><strong>不放代码不等于没有工程内容。</strong>其中两项是单位的生产系统，源码与数据受约束不能公开——这是它们的本来形态，不是短板。所以页面把力气花在讲清楚「为什么这么设计」上，那部分答案在设计里，不在代码里。</p>
+      <p><strong>规模数字只用结构性的。</strong>文件数、模块数、迁移条数、节点数这类数字天然可核对；响应时间、吞吐量这类没有实测过的一律不写。</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

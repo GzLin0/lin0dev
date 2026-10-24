@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>约束该写进 prompt，还是写进代码 · 李俊霖</title>
+<meta name="description" content="prompt 里的约束是建议，代码里的约束才是约束。但代码约束也不是越多越好。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/projects/" class="hide-sm">作品</a>
+      <a href="/notes/" class="active hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/notes/">笔记</a><span class="sep">/</span>约束该写进 prompt，还是写进代码</div>
+</div>
+
+<header class="hero compact">
+  <div class="wrap">
+    <h1 class="page-title">约束该写进 prompt，还是写进代码</h1>
+    <p class="hero-sub mb0">
+      把「不许做某事」写进 prompt 是建议，写进代码才是约束。
+      但分清这两者只是第一步——真正难的是判断哪些约束<strong>值得</strong>做成代码。
+    </p>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap-narrow">
+    <h2>问题从哪来</h2>
+    <p>
+      在多智能体系统里搭硬约束层时，遇到一个反复出现的争论：某个「不许出现 X」的规则，
+      应该写在 prompt 里，还是做成代码校验？
+    </p>
+    <p>
+      直觉答案通常是 prompt——快、灵活、改起来不用发版。这个答案在演示时总是有效，
+      在真实运行里单次调用可能确实也有效，但<strong>它没有把规则变成规则，只是把这个规则变成了一个较高的概率</strong>。
+    </p>
+    <p>
+      说清楚这句话的含义：写进 prompt 的约束，模型每一轮都会重新做一次是否遵守的决策。
+      绝大多数轮次它遵守，偶尔它不遵守——而你不控制它什么时候不遵守。
+      写进代码的约束没有这个概率成分，它要么通过要么失败。
+    </p>
+    <p>
+      这是两类东西，不是程度不同的同一件事。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap-narrow">
+    <h2>分界在哪</h2>
+    <p>
+      实际可用的分法不是按「重要程度」，而是按<strong>违反后的可发现性</strong>。
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>约束类型</th><th>违反了会怎样</th><th>该放哪</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>风格倾向</td>
+            <td>读起来不理想，但一眼能看出来——人读到就知道了</td>
+            <td><strong>prompt</strong>，越自然越好</td>
+          </tr>
+          <tr>
+            <td>事实边界</td>
+            <td>说了不该说的内容，读者<strong>不可能</strong>发现，因为它读起来同样通顺</td>
+            <td><strong>代码</strong>，而且要前置拦截</td>
+          </tr>
+          <tr>
+            <td>结构要求</td>
+            <td>格式不对，下游解析失败——会立刻报错</td>
+            <td><strong>代码</strong>，但可以后置校验</td>
+          </tr>
+          <tr>
+            <td>口径一致性</td>
+            <td>同一件事前后说法不同，只有通读全文才发现</td>
+            <td>两者都要：prompt 引导 + 代码抽查</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      第二行是分界线的核心。判断标准是一句话：
+      <strong>这个错误如果发生了，读者能不能自己发现？</strong>
+    </p>
+    <p>
+      能发现 → 用 prompt 就够了，因为错误会被后续环节自然拦下。
+      不能发现 → 必须用代码，因为没有人会替你发现，它会一直流到产出里。
+    </p>
+    <p>
+      算错的数字是典型：读起来一样通顺，甚至更通顺。结构化数据传递中丢字段也是——
+      下游不会报错，只会「合理地」补一个。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap-narrow">
+    <h2>但代码约束不是越多越好</h2>
+    <p>
+      这是我实际踩过的地方。早期把契约设计得过细，结果模型为了满足结构而牺牲内容质量——
+      它把精力花在「填满字段」上，而不是把话说对。
+    </p>
+    <p>
+      放宽非关键字段的必填要求之后，产出质量反而回升了。原因是：
+      过多的结构约束<strong>占用了模型的注意力预算</strong>。它的能力是有限的，
+      花在满足格式上的部分，就是从内容理解上扣掉的。
+    </p>
+    <p>
+      所以真正要问的不是「这个约束严不严格」，而是
+      <strong>「不遵守它的代价，和大面积降低产出质量的代价，哪个更大」</strong>。
+      只有前者显著更大时，才值得做成硬约束。
+    </p>
+
+    <div class="note">
+      <p><strong>一条实操判据。</strong>如果一条约束做成硬拦截后，在正常输入上也会频繁拒绝，
+        那它大概率约束错了层级——你要管的是产出质量，却卡在了中间过程的形态上。
+        这种情况应该把它降级为「事后校验 + 标记」，而不是前置拦截。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap-narrow">
+    <h2>什么条件下这个结论会失效</h2>
+    <ul class="rules">
+      <li><span class="k">任务本身是模糊的</span><span>如果对约束的要求需要按情况判断、无法预先枚举，硬编码规则会变成枷锁，产出被压得千篇一律。这时应该把规则降级为提示加事后校验。</span></li>
+      <li><span class="k">还在探索期</span><span>产出应该长什么样还没稳定时，过早的硬约束会频繁误拦，反而拖慢迭代。<strong>门禁的标准要随项目成熟度逐步收紧</strong>——一开始就按最终标准卡，会卡死在半路。</span></li>
+      <li><span class="k">错误可被下游消化</span><span>如果下游有独立校验、或者有人工复核环节，某些约束可以依赖那层兜底，不必重复实现。</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap-narrow">
+    <h2>一句话</h2>
+    <div class="note">
+      <p>
+        <strong>按违反后的可发现性，而不是按重要性，决定一条约束放 prompt 还是放代码。</strong>
+        可发现的交给语言，不可发现的交给代码。然后再问一遍：这条约束值得付出多少注意力成本。
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块化后台管理系统 · 李俊霖</title>
+<meta name="description" content="在既有大型代码库上二次开发：插件化 manifest、版本化迁移链、三层模块解耦、容器化交付。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/projects/" class="active hide-sm">作品</a>
+      <a href="/notes/" class="hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/projects/">作品</a><span class="sep">/</span>模块化后台管理系统</div>
+</div>
+
+<header class="hero compact">
+  <div class="wrap">
+    <div class="hero-role">二次开发 · 架构约束下的演进</div>
+    <h1 class="page-title">模块化后台管理系统</h1>
+    <p class="hero-sub">
+      在一个 <strong>2272 文件</strong>的既有代码库上做二次开发。难点从来不是写新功能，
+      而是<strong>怎么在不破坏既有结构的前提下把扩展点划出来</strong>。
+    </p>
+    <div class="hero-meta">
+      <span><i class="dot dim"></i>业务系统，源码与界面不公开</span>
+      <span>FastAPI · SQLAlchemy · Vue 3</span>
+      <span>Docker 交付</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>一、这是什么</h2>
+    <p>
+      一个后台管理系统，基于已有的开源框架做二次开发。这类工作与从零起项目的区别很实际：
+      你面对的是一套别人定的分层、命名约定与扩展方式，<strong>而你的每个新增都要让这套结构继续成立，而不是把它撑破。</strong>
+    </p>
+    <p>
+      系统的功能分三层，这个分层决定了扩展点怎么划：
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>层</th><th>内容</th><th>变更频率</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>系统层</strong></td><td>用户、角色、权限、菜单、审计日志</td><td>低——改动影响面最大</td></tr>
+          <tr><td><strong>监控层</strong></td><td>运行状态、任务执行情况、异常记录</td><td>中</td></tr>
+          <tr><td><strong>业务层</strong></td><td>具体业务模块，二十余个</td><td>高——持续新增</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">
+      分层的价值在于：变更频率高的层可以放心改，变更频率低的层要谨慎。
+      没有这个划分，改一个业务模块时没人说得清会不会牵动权限。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>二、规模</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">2272</div><div class="l">既有代码文件</div></div>
+      <div class="stat"><div class="n">13</div><div class="l">版本化数据库迁移</div></div>
+      <div class="stat"><div class="n">20+</div><div class="l">功能模块</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">模块层</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>三、三个关键设计</h2>
+
+    <h3>1 · 插件化 manifest：扩展不改核心</h3>
+    <p>
+      新增一个业务模块时，无需改动框架的核心代码——模块通过一份清单声明自己提供什么路由、
+      占哪些菜单、依赖哪些权限、需要哪些数据表。框架在启动时扫描并装配。
+    </p>
+
+    <figure class="diagram-frame">
+      <svg viewBox="0 0 680 300" role="img" aria-label="插件化模块装配示意">
+        <defs>
+          <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"/>
+          </marker>
+        </defs>
+
+        <!-- 核心 -->
+        <rect x="250" y="26" width="180" height="52" rx="8" fill="rgba(88,166,255,.12)" stroke="#58a6ff" stroke-width="1.5"/>
+        <text x="340" y="49" text-anchor="middle" fill="#58a6ff" font-size="13" font-family="sans-serif">框架核心</text>
+        <text x="340" y="67" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">改动成本最高 · 稳定</text>
+
+        <!-- 装配器 -->
+        <rect x="250" y="112" width="180" height="46" rx="8" fill="#161b22" stroke="#2d333b"/>
+        <text x="340" y="140" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-family="sans-serif">启动时扫描与装配</text>
+
+        <line x1="340" y1="78" x2="340" y2="106" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#a4)"/>
+
+        <!-- manifest -->
+        <rect x="60" y="196" width="150" height="72" rx="8" fill="#161b22" stroke="#2d333b" stroke-dasharray="5 3"/>
+        <text x="135" y="222" text-anchor="middle" fill="#e6edf3" font-size="12" font-family="monospace">manifest.md</text>
+        <text x="135" y="242" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">路由 / 菜单</text>
+        <text x="135" y="258" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">权限 / 数据表</text>
+
+        <rect x="266" y="196" width="150" height="72" rx="8" fill="#161b22" stroke="#2d333b" stroke-dasharray="5 3"/>
+        <text x="341" y="222" text-anchor="middle" fill="#e6edf3" font-size="12" font-family="monospace">manifest.md</text>
+        <text x="341" y="242" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">业务模块 A</text>
+        <text x="341" y="258" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">变更频繁</text>
+
+        <rect x="472" y="196" width="150" height="72" rx="8" fill="#161b22" stroke="#2d333b" stroke-dasharray="5 3"/>
+        <text x="547" y="222" text-anchor="middle" fill="#e6edf3" font-size="12" font-family="monospace">manifest.md</text>
+        <text x="547" y="242" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">业务模块 B</text>
+        <text x="547" y="258" text-anchor="middle" fill="#9198a1" font-size="10.5" font-family="sans-serif">变更频繁</text>
+
+        <path d="M 135 190 L 135 172 L 340 172 L 340 164" fill="none" stroke="#6e7681" stroke-width="1.2"/>
+        <path d="M 341 190 L 341 164" fill="none" stroke="#6e7681" stroke-width="1.2"/>
+        <path d="M 547 190 L 547 172 L 340 172" fill="none" stroke="#6e7681" stroke-width="1.2"/>
+        <line x1="340" y1="172" x2="340" y2="162" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a4)"/>
+
+        <text x="340" y="290" text-anchor="middle" fill="#4d5560" font-size="11" font-family="sans-serif">新模块只新增文件，不改动核心 —— 这是扩展点划得对不对的判据</text>
+      </svg>
+      <figcaption>插件化装配。判据很简单：新增一个模块时，如果必须改核心代码，说明扩展点划错了。</figcaption>
+    </figure>
+
+    <h3>2 · 版本化迁移：十三条，每一条都能单独回退</h3>
+    <p>
+      数据库结构变更全部走迁移脚本，按版本号链式排列。这套机制解决的是
+      <strong>「开发、测试、生产三套环境的表结构怎么保证一致」</strong>——
+      手工改表在这里是不可行的，因为没人记得住每个环境被改到了哪一步。
+    </p>
+    <p>
+      十三条迁移是迭代的结果而非一次设计：每加一个业务模块通常会带一两条。
+      关键在于<strong>迁移只增不改</strong>——已经上线过的迁移不允许回改，需要调整就再写一条新的。
+      这样任何环境都能从任意历史版本向前推到最新。
+    </p>
+
+    <h3>3 · 三层模块解耦，各自独立交付</h3>
+    <p>
+      系统层、监控层、业务层在代码组织上分离开，业务模块之间不直接互相引用，
+      需要共享的能力下沉到公共层。收益在多模块并行开发时才体现出来——
+      没有这层隔离，两个模块同时开发时冲突会集中在公共文件上。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>四、决策记录</h2>
+
+    <div class="decision">
+      <div class="d-head">为什么用插件化 manifest，而不是直接改核心代码</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>在 2272 文件的既有代码库上，改核心的代价不是这一次改动本身，而是<strong>它让后续每一次框架升级都变成一次合并冲突</strong>。
+            插件化把自定义部分隔离在核心之外，升级时冲突面小得多。</dd>
+          <dt>放弃了什么</dt>
+          <dd>直接的表达力。有些需求用改核心的方式三行就能写出来，走插件机制要写清单、注册、适配，代码量更大。
+            另外插件机制本身也是一层抽象，新人理解系统时需要先懂这套装配规则。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果这个系统不再跟着上游框架升级、自定义部分也不打算复用，插件化就是纯负担。
+            <strong>它的收益来自「未来还要演进」这个前提。</strong></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么迁移脚本只增不改</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>已上线的迁移如果在原文件上改，开发环境会得到新结构，而生产环境不会重跑它——
+            两边结构出现静默分叉，且没有任何机制会报错。<strong>只增不改让「当前结构」永远等于「按顺序跑完全部迁移」的结果，可推导。</strong></dd>
+          <dt>放弃了什么</dt>
+          <dd>迁移文件的整洁。迭代几轮后，同一个表可能出现在三条迁移里（建表、加字段、改类型），
+            要看全貌必须从头读一遍。这个代价用文档补，而不是用改文件的方式消除。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果迁移还没上过生产（还在开发期），直接改是合理的——只增不改的规则从第一次上线开始生效。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么用容器交付，而不是在服务器上直接部署</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>依赖关系复杂（框架、数据库驱动、前端构建产物、系统库）。直接部署意味着服务器上装了什么，
+            这个系统就依赖什么，换一台机器要重新踩一遍环境。<strong>容器把「环境」变成交付物的一部分。</strong></dd>
+          <dt>放弃了什么</dt>
+          <dd>镜像体积与构建时间。分层缓存设计得不好时，改一行代码要重建整个镜像。
+            另外容器内的调试比直接在宿主机上调试要绕一层。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>单机、单服务、环境固定不变时，容器带来的收益有限，直接部署更轻。容器真正开始划算是在
+            <strong>环境数量大于一、或者部署需要重复发生时</strong>。</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>五、失败与边界</h2>
+    <ul class="rules">
+      <li><span class="k">扩展点划错</span><span>最初把某类能力放在业务层，后来发现系统层也要用，导致要么复制一份、要么把业务层的代码反向依赖上来。<strong>根因是「按当前谁用它」而不是「按它属于谁」去决定分层。</strong></span></li>
+      <li><span class="k">迁移顺序依赖</span><span>有两条迁移之间存在隐性顺序依赖（后一条依赖前一条建的表），但版本号编排没有体现出来。在全新环境上按序执行时暴露了问题。迁移应该只依赖它之前的版本，不能跨越。</span></li>
+      <li><span class="k">插件装配的报错</span><span>清单写错时，报错发生在启动阶段且信息不指向具体模块——因为扫描器是先收集后统一装配。后来给每个模块的装配过程加了明确标识，报错能指出是哪个模块的问题。</span></li>
+    </ul>
+
+    <div class="note edge">
+      <p><strong>它不适合什么场景。</strong>功能固定、不会持续新增模块的小系统——插件化与分层带来的抽象成本没有对应的收益。
+        一个稳定的单模块后台，直接写更快也更好维护。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>六、链接与状态</h2>
+    <div class="table-scroll">
+      <table>
+        <tbody>
+          <tr><th>状态</th><td><strong>业务系统，源码与界面不公开</strong></td></tr>
+          <tr><th>原因</th><td>业务系统且包含未公开的业务逻辑与数据结构</td></tr>
+          <tr><th>可提供的</th><td>以上架构说明与设计决策；不含业务逻辑细节与界面截图</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

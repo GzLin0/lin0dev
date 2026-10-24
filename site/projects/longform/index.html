@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长文结构化生成编排服务 · 李俊霖</title>
+<meta name="description" content="把多章节长文的生成拆成有依赖的节点图，支持中断续写与失效传播，改动只重算下游。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/projects/" class="active hide-sm">作品</a>
+      <a href="/notes/" class="hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/projects/">作品</a><span class="sep">/</span>长文结构化生成编排服务</div>
+</div>
+
+<header class="hero compact">
+  <div class="wrap">
+    <div class="hero-role">工作流编排 · 流式交互</div>
+    <h1 class="page-title">长文结构化生成编排服务</h1>
+    <p class="hero-sub">
+      把一份多章节长文的生成拆成<strong>有依赖关系的节点图</strong>。每章可以单独中断、单独续写，
+      改动一章只连带重算它的下游——不做全量重跑。
+    </p>
+    <div class="hero-meta">
+      <span><i class="dot amber"></i>整理中，入口稍后开放</span>
+      <span>Python · FastAPI · LangGraph</span>
+      <span>Vue 3 · TypeScript</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>一、这是什么</h2>
+    <p>
+      用大模型生成一份多章节长文，直觉做法是「一次调用，让它写完」。这在短产出上可行，
+      但章节一多就会暴露三个问题：
+    </p>
+    <ul class="rules">
+      <li><span class="k">写不完</span><span>上下文长度与稳定性限制了单次产出能有多长，写到后面质量会明显下滑。</span></li>
+      <li><span class="k">改不动</span><span>只想改其中一章，却要整个重来，且重来的结果与上一版不一致——前面几章会跟着变。</span></li>
+      <li><span class="k">接不上</span><span>中途失败就得从头开始，没有断点。</span></li>
+    </ul>
+    <p>
+      这个服务的解法是<strong>把长文视为一张有向图而不是一条长文本</strong>：章节是节点，章节间的信息传递是边。
+      生成被拆成逐节点的执行，每个节点可以独立完成、独立检查、独立重算。
+    </p>
+
+    <div class="note">
+      <p><strong>一个必须说清的边界。</strong>需要数值计算的章节不由模型产出——数字由程序算好，
+      模型只负责把它写成通顺的叙述。让模型算数是不可靠的，而且算错了很难发现。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>二、规模</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">11</div><div class="l">章节节点</div></div>
+      <div class="stat"><div class="n">29</div><div class="l">Prompt 资产</div></div>
+      <div class="stat"><div class="n">2</div><div class="l">前后端</div></div>
+      <div class="stat"><div class="n">SSE</div><div class="l">流式输出</div></div>
+    </div>
+    <p class="small muted">
+      29 个 prompt 是<strong>资产化的</strong>——独立于代码存放，可单独版本化与替换。
+      把 prompt 硬编码在代码里，改措辞就得改代码、走一遍发版流程，实际结果是没人愿意改。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>三、结构</h2>
+
+    <figure class="diagram-frame">
+      <svg viewBox="0 0 680 340" role="img" aria-label="章节依赖图与失效传播示意">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6e7681"/>
+          </marker>
+          <marker id="a2-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#d29922"/>
+          </marker>
+        </defs>
+
+        <!-- 第 1 章 -->
+        <rect x="30" y="48" width="96" height="44" rx="7" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+        <text x="78" y="75" text-anchor="middle" fill="#3fb950" font-size="12.5" font-family="sans-serif">第 1 章</text>
+        <text x="78" y="112" text-anchor="middle" fill="#6e7681" font-size="10.5" font-family="sans-serif">已缓存</text>
+
+        <!-- 第 2 章 -->
+        <rect x="160" y="48" width="96" height="44" rx="7" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+        <text x="208" y="75" text-anchor="middle" fill="#3fb950" font-size="12.5" font-family="sans-serif">第 2 章</text>
+        <text x="208" y="112" text-anchor="middle" fill="#6e7681" font-size="10.5" font-family="sans-serif">已缓存</text>
+
+        <!-- 第 3 章 改动 -->
+        <rect x="290" y="48" width="96" height="44" rx="7" fill="rgba(210,153,34,.10)" stroke="#d29922" stroke-width="2"/>
+        <text x="338" y="75" text-anchor="middle" fill="#d29922" font-size="12.5" font-family="sans-serif">第 3 章</text>
+        <text x="338" y="112" text-anchor="middle" fill="#d29922" font-size="10.5" font-family="sans-serif">本轮改动</text>
+
+        <!-- 第 4 章 -->
+        <rect x="420" y="48" width="96" height="44" rx="7" fill="rgba(210,153,34,.06)" stroke="#d29922" stroke-width="1.2" stroke-dasharray="5 3"/>
+        <text x="468" y="75" text-anchor="middle" fill="#d29922" font-size="12.5" font-family="sans-serif">第 4 章</text>
+        <text x="468" y="112" text-anchor="middle" fill="#d29922" font-size="10.5" font-family="sans-serif">连带重算</text>
+
+        <!-- 第 5 章 -->
+        <rect x="550" y="48" width="96" height="44" rx="7" fill="#161b22" stroke="#2d333b"/>
+        <text x="598" y="75" text-anchor="middle" fill="#6e7681" font-size="12.5" font-family="sans-serif">第 5 章</text>
+        <text x="598" y="112" text-anchor="middle" fill="#6e7681" font-size="10.5" font-family="sans-serif">未受影响</text>
+
+        <!-- 依赖边 -->
+        <line x1="126" y1="70" x2="154" y2="70" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a2)"/>
+        <line x1="256" y1="70" x2="284" y2="70" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a2)"/>
+        <line x1="386" y1="70" x2="414" y2="70" stroke="#d29922" stroke-width="1.6" marker-end="url(#a2-hot)"/>
+        <line x1="516" y1="70" x2="544" y2="70" stroke="#2d333b" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+        <!-- 上游依赖弧 -->
+        <path d="M 78 44 C 78 16, 338 16, 338 44" fill="none" stroke="#2d333b" stroke-width="1"/>
+        <text x="208" y="16" text-anchor="middle" fill="#4d5560" font-size="10" font-family="sans-serif">章节间上下文传递</text>
+
+        <!-- 说明块 -->
+        <rect x="30" y="160" width="616" height="86" rx="8" fill="#161b22" stroke="#2d333b"/>
+        <text x="52" y="186" fill="#e6edf3" font-size="12.5" font-family="sans-serif">改动第 3 章后的执行范围</text>
+        <circle cx="58" cy="207" r="4" fill="#3fb950"/>
+        <text x="72" y="211" fill="#9198a1" font-size="11.5" font-family="sans-serif">第 1、2 章 —— 命中缓存，不重算</text>
+        <circle cx="58" cy="228" r="4" fill="#d29922"/>
+        <text x="72" y="232" fill="#9198a1" font-size="11.5" font-family="sans-serif">第 3、4 章 —— 重算（4 是 3 的下游）</text>
+
+        <text x="340" y="278" text-anchor="middle" fill="#4d5560" font-size="11" font-family="sans-serif">重算范围随依赖图传播，与全文长度无关</text>
+        <line x1="120" y1="258" x2="560" y2="258" stroke="#21262d" stroke-width="1"/>
+      </svg>
+      <figcaption>失效传播：改一章只重算受影响的下游区间。这是整套设计里最省成本、也最值得讲的一个决定。</figcaption>
+    </figure>
+
+    <h3>四个关键手法</h3>
+    <ul class="rules">
+      <li><span class="k">节点化生成</span><span>每章是图上一个节点，独立执行。单章失败不影响已完成的其他章——重试的粒度是章，不是全文。</span></li>
+      <li><span class="k">检查点续写</span><span>执行状态持久化，中断后从断点继续，不从头开始。长任务里这是必需的：跑一次要几分钟，中途任何抖动都不该让进度归零。</span></li>
+      <li><span class="k">上下文有向传递</span><span>章节不是各写各的——后续章节能读到前面章节的产出，保证术语、口径、叙事线一致。这也是依赖图而非简单列表的原因。</span></li>
+      <li><span class="k">流式回传</span><span>通过 SSE 把生成过程实时推给前端。长任务必须让用户看见进度，否则等待体验等同于卡死。</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>四、决策记录</h2>
+
+    <div class="decision">
+      <div class="d-head">为什么单章改动只重算下游，而不是全量重跑</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>长文的价值在一致性，但一致性不等于每次都从头跑。改第 3 章时，第 1、2 章的内容没变、也没依赖第 3 章，
+            重新生成它们只增加成本与不确定性。<strong>重算范围应该由依赖关系决定，而不是由「保守起见」决定。</strong></dd>
+          <dt>放弃了什么</dt>
+          <dd>绝对的一致保障。上游虽然没改，但重新生成可能会得到不同措辞，有时反而更协调。选择缓存就接受了「上游保持旧版本」这个前提。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果上游章节的产出本身不稳定、每次生成差异很大，缓存会造成风格割裂——旧的上游配新的下游，读起来别扭。
+            这种情况应该提供「强制全量重跑」的开关，而不是把策略写死。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么数值由程序计算、模型只写正文</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>大模型做算术不可靠，而且它的错误是<strong>隐蔽的</strong>——算错的数字读起来同样通顺，
+            不会自己暴露。把数值交给确定性的程序，模型只负责把它组织成语言，各自的错误面都收窄了。</dd>
+          <dt>放弃了什么</dt>
+          <dd>端到端的简单性。需要为每个指标单独写计算逻辑，接入新指标时要改代码。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果任务本身不需要定量结论（纯叙述、建议类产出），这套分层就是多余的开销。判断标准是：
+            <strong>这个数字错了，读者能不能立刻看出来。</strong>看不出来就必须由程序算。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么 prompt 要抽成独立的 29 个资产，而不是写在代码里</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>Prompt 是这个系统里变更最频繁的部分——调措辞、换风格、适配新场景，都要动它。
+            硬编码在代码里意味着每次调整都要走一遍发版流程。<strong>把最常改的东西放在最难改的位置，结果是没人愿意改。</strong></dd>
+          <dt>放弃了什么</dt>
+          <dd>类型安全与静态检查。Prompt 是外部资源，写错了编译器不会告诉你，只能在运行时报错。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果项目规模小、prompt 数量少（三五个），外部化的管理成本会超过收益，直接放在代码里更简单。
+            这个做法在 prompt 数量上到两位数之后才开始划算。</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>五、失败与边界</h2>
+    <ul class="rules">
+      <li><span class="k">中断恢复的坑</span><span>早期断点只记录「执行到哪一章」，没有记录该章的中间状态，恢复时那一章要重跑。后来把节点内的状态也一并持久化，才做到真正意义上的续写。</span></li>
+      <li><span class="k">上下文膨胀</span><span>把所有上游章节全文塞给下游，很快撑爆上下文，且成本随章节数线性上涨。改为传递摘要加关键约束，只保留真正需要一致的信息。</span></li>
+      <li><span class="k">流式的边界</span><span>SSE 在中间有反向代理时容易被缓冲住，表现为前端长时间无输出然后一次性刷出全文——看起来像卡死。需要在代理层关掉缓冲。</span></li>
+    </ul>
+
+    <div class="note edge">
+      <p><strong>第三方组件的归属说明。</strong>服务里集成了成熟的定量计算组件用于部分指标计算。
+        这些组件是引用而非自研——页面与简历里都按「集成成熟计算组件」表述，不声称实现。</p>
+      <p><strong>它不适合什么场景。</strong>单章节、短产出、无需反复修改的任务。这时图编排带来的复杂度（检查点、依赖管理、状态持久化）全是净成本，一次直接调用更合适。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>六、链接与状态</h2>
+    <div class="table-scroll">
+      <table>
+        <tbody>
+          <tr><th>状态</th><td><strong>整理中，可试用入口稍后开放</strong></td></tr>
+          <tr><th>整理什么</th><td>清理早期探索阶段的第三方引用目录、补齐文档、按技术命名重命名，然后才公开</td></tr>
+          <tr><th>公开前的硬前置</th><td>限流与配额——公网开放等于开放一个花钱的接口，没有限流不上线</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small faint">
+      这是四项作品里唯一会开放可运行入口的一项，也是第一个挂上站的智能体。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

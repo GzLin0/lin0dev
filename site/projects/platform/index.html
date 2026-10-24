@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>城市体检数据管理平台 · 李俊霖</title>
+<meta name="description" content="省级双端生产系统。元数据驱动的指标配置、多层级权限、审核状态机、异构数据汇聚与批量出表。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/">首页</a>
+      <a href="/projects/" class="active hide-sm">作品</a>
+      <a href="/notes/" class="hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/projects/">作品</a><span class="sep">/</span>城市体检数据管理平台</div>
+</div>
+
+<header class="hero compact">
+  <div class="wrap">
+    <div class="hero-role">中大型业务系统 · 双端 · 生产运维</div>
+    <h1 class="page-title">城市体检数据管理平台</h1>
+    <p class="hero-sub">
+      一套省级双端生产系统：移动端负责调研数据采集与板块填报，网页端负责指标配置、多层级权限、
+      数据汇聚与批量出表。<strong>多级组织树五级联动，是真实有人在用的系统。</strong>
+    </p>
+    <div class="hero-meta">
+      <span><i class="dot"></i>已上线，公开成果</span>
+      <span>Spring Cloud · Python · Vue 3 · 小程序</span>
+      <span>参与研发</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>一、这是什么</h2>
+    <p>
+      一个面向多层级组织的指标数据管理系统。业务上要解决的是：<strong>几十项指标、五级组织、多个填报方，
+      怎么让数据从采集到汇总到出表这条链路可管、可查、可复算。</strong>
+    </p>
+    <p>
+      难点不在单个功能，在于三个互相牵制的约束同时成立：
+    </p>
+    <ul class="rules">
+      <li><span class="k">指标会变</span><span>指标的定义、口径、填报要求每年调整。如果指标写死在代码里，每次调整都要发版——这在业务上是不可接受的。</span></li>
+      <li><span class="k">权限分层</span><span>五级组织，每一级只能看自己管辖范围内的数据。这不是简单的功能权限，是数据行级可见性。</span></li>
+      <li><span class="k">填报会错</span><span>几十个单位填报，数据质量参差。必须有审核环节，而且退回意见要能回传到填报人。</span></li>
+    </ul>
+
+    <div class="note">
+      <p><strong>我在其中的角色是「参与研发」。</strong>参与了双端的全流程梳理与开发、数据结构与字段设计、
+        指标计算分析的数据梳理与流程梳理，以及数据库管理运维与线上缺陷修复。
+        下面写的是这套系统的技术形态与我实际经手的那部分。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>二、规模</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">2</div><div class="l">端（小程序 + 网页）</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">级组织联动</div></div>
+      <div class="stat"><div class="n">双栈</div><div class="l">后端服务</div></div>
+      <div class="stat"><div class="n">生产</div><div class="l">状态（非演示）</div></div>
+    </div>
+    <p class="small muted">
+      后端是双栈的：重型业务服务跑在 Spring Cloud 系框架上，AI 相关的部分用 Python。
+      前端同样是两端——移动端与网页端，各自有不同的交互约束（移动端要弱网可用，网页端要处理大数据量表格）。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>三、三个最值得讲的设计</h2>
+
+    <h3>1 · 指标配置驱动，而不是写死在代码里</h3>
+    <p>
+      指标的定义（名称、单位、填报字段、校验规则、所属板块）全部存在数据里，
+      界面由这份配置动态渲染。新增或调整一个指标，改的是配置数据，不是代码。
+    </p>
+    <p>
+      这带来一个连锁好处：<strong>指标的口径变化也变成了数据变更</strong>，可以带版本、可以追溯
+      「去年这一项是怎么定义的」。如果写死在代码里，口径的历史只能靠翻代码仓库。
+    </p>
+    <p class="small muted">
+      代价是渲染逻辑变复杂、类型安全变弱，且配置写错时报错位置离根因较远。见第五节。
+    </p>
+
+    <h3>2 · 权限分成两层：功能权限与数据可见性</h3>
+    <p>
+      只做功能权限（能不能进某个菜单）是不够的——各级单位用的是同一套功能，
+      区别只在于<strong>能看到哪部分数据</strong>。所以权限模型实际是两层：
+      角色决定能做什么，组织层级决定能看哪些行。
+    </p>
+
+    <figure class="diagram-frame">
+      <svg viewBox="0 0 680 300" role="img" aria-label="权限分层与数据可见性示意">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6e7681"/>
+          </marker>
+        </defs>
+
+        <!-- 组织树 -->
+        <text x="30" y="30" fill="#6e7681" font-size="11.5" font-family="sans-serif">组织层级（决定可见数据范围）</text>
+
+        <rect x="30" y="44" width="86" height="34" rx="6" fill="rgba(88,166,255,.12)" stroke="#58a6ff"/>
+        <text x="73" y="66" text-anchor="middle" fill="#58a6ff" font-size="12" font-family="sans-serif">省级</text>
+
+        <rect x="140" y="44" width="86" height="34" rx="6" fill="#161b22" stroke="#2d333b"/>
+        <text x="183" y="66" text-anchor="middle" fill="#9198a1" font-size="12" font-family="sans-serif">市级</text>
+
+        <rect x="250" y="44" width="86" height="34" rx="6" fill="#161b22" stroke="#2d333b"/>
+        <text x="293" y="66" text-anchor="middle" fill="#9198a1" font-size="12" font-family="sans-serif">区县级</text>
+
+        <rect x="360" y="44" width="86" height="34" rx="6" fill="#161b22" stroke="#2d333b"/>
+        <text x="403" y="66" text-anchor="middle" fill="#9198a1" font-size="12" font-family="sans-serif">街道</text>
+
+        <rect x="470" y="44" width="86" height="34" rx="6" fill="#161b22" stroke="#2d333b"/>
+        <text x="513" y="66" text-anchor="middle" fill="#9198a1" font-size="12" font-family="sans-serif">社区</text>
+
+        <line x1="116" y1="61" x2="136" y2="61" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a3)"/>
+        <line x1="226" y1="61" x2="246" y2="61" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a3)"/>
+        <line x1="336" y1="61" x2="356" y2="61" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a3)"/>
+        <line x1="446" y1="61" x2="466" y2="61" stroke="#6e7681" stroke-width="1.2" marker-end="url(#a3)"/>
+
+        <!-- 权限判定 -->
+        <rect x="30" y="118" width="300" height="102" rx="8" fill="#161b22" stroke="#2d333b"/>
+        <text x="52" y="144" fill="#e6edf3" font-size="12.5" font-family="sans-serif">第一层 · 功能权限</text>
+        <text x="52" y="167" fill="#9198a1" font-size="11.5" font-family="sans-serif">角色 → 能进入哪些模块</text>
+        <text x="52" y="190" fill="#9198a1" font-size="11.5" font-family="sans-serif">审核者 / 填报者 / 管理者</text>
+        <text x="52" y="211" fill="#6e7681" font-size="10.5" font-family="sans-serif">回答「能不能做」</text>
+
+        <rect x="352" y="118" width="300" height="102" rx="8" fill="#161b22" stroke="#d29922" stroke-width="1.2"/>
+        <text x="374" y="144" fill="#d29922" font-size="12.5" font-family="sans-serif">第二层 · 数据可见性</text>
+        <text x="374" y="167" fill="#9198a1" font-size="11.5" font-family="sans-serif">所在层级 → 能读到哪些数据行</text>
+        <text x="374" y="190" fill="#9198a1" font-size="11.5" font-family="sans-serif">含下级汇总，不含同级与上级明细</text>
+        <text x="374" y="211" fill="#6e7681" font-size="10.5" font-family="sans-serif">回答「能看多少」</text>
+
+        <text x="340" y="264" text-anchor="middle" fill="#4d5560" font-size="11" font-family="sans-serif">两层同时成立才算通过 —— 只做功能权限的系统，各级看到的数据是一样的</text>
+        <line x1="120" y1="246" x2="560" y2="246" stroke="#21262d" stroke-width="1"/>
+      </svg>
+      <figcaption>权限分两层。数据可见性按组织层级计算，是这套系统里最容易做错、也最影响正确性的部分。</figcaption>
+    </figure>
+
+    <h3>3 · 审核状态机与意见回传</h3>
+    <p>
+      填报数据走状态机：草稿 → 待审 → 通过，或退回。关键在于<strong>退回不是打回重填，而是带着意见回到填报人</strong>——
+      否则填报人只知道「没过」，不知道哪里有问题，来回沟通的成本会吃掉整条流程的收益。
+    </p>
+    <p>
+      状态流转的每一步都留痕：谁在什么时候改的、意见是什么。这既是为了追责，也是为了复算——
+      发现某个数字不对时，能顺着流转记录找到它是在哪一步被改动的。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>四、我实际经手的技术工作</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>工作</th><th>通用化的说法</th><th>涉及的问题</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>双端全流程梳理与开发</td>
+            <td>前后端接口联调与业务闭环实现</td>
+            <td>两端的数据契约一致、状态同步、弱网容错</td>
+          </tr>
+          <tr>
+            <td>数据结构与字段设计</td>
+            <td>元数据驱动建模</td>
+            <td>指标可配置化之后，表结构怎么设计才不至于频繁变更</td>
+          </tr>
+          <tr>
+            <td>指标计算分析的数据梳理与流程梳理</td>
+            <td>指标口径到字段的映射与计算编排</td>
+            <td>口径写在文档里与写在代码里不一致的问题</td>
+          </tr>
+          <tr>
+            <td>数据库管理运维与缺陷修复</td>
+            <td>生产库巡检、数据修复、缺陷定位与回归</td>
+            <td><strong>生产环境的缺陷定位远比开发阶段难——没有干净的重现环境</strong></td>
+          </tr>
+          <tr>
+            <td>异构填报数据的汇聚</td>
+            <td>多来源结构化数据的汇聚管道与结构校验</td>
+            <td>不同填报方提交的数据形态不一致，直接入库会污染下游统计</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>五、决策记录</h2>
+
+    <div class="decision">
+      <div class="d-head">为什么指标要做成配置驱动，而不是写死在代码里</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>指标口径每年调整是这类系统的常态。写死在代码里意味着每次调整都要改代码、测、发版，
+            而调整往往有时间压力（评审节点临近）。<strong>把最常变的东西做成数据，是把变更成本从「一次发版」降到「一次配置」。</strong></dd>
+          <dt>放弃了什么</dt>
+          <dd>类型安全与编译期检查。配置写错时，问题会在运行时才暴露，且报错位置往往离根因很远——
+            表格渲染不出来，可能真正的错在某个字段的类型定义上。这要求在配置层加校验。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果指标是稳定的、三五年不动的，配置驱动就是过度设计——多出的抽象层只增加理解成本而没有任何收益。
+            <strong>判断标准是变更频率，不是「配置化听起来更高级」。</strong></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么权限要拆成功能权限与数据可见性两层</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>多层级组织下，各级用的是<strong>同一套功能</strong>，区别只在能看到哪些数据。
+            如果只用功能权限去表达，就会出现「给市级建一套菜单、给区县建一套菜单」这种不可维护的做法。</dd>
+          <dt>放弃了什么</dt>
+          <dd>简单性。每次数据查询都要带上层级过滤条件，漏掉一处的后果是该看的值看不到、或者不该看的看到了。
+            所以这类过滤必须收敛到统一入口，不能靠每个接口自己记得加。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果组织层级是平的（没有上下级）、或者所有使用者看到的数据范围一致，两层模型就是多余的。
+            单层功能权限足够。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="decision">
+      <div class="d-head">为什么提交接口必须做幂等</div>
+      <div class="d-body">
+        <dl>
+          <dt>为什么这么选</dt>
+          <dd>移动端填报的网络环境不可控。用户点提交后没收到响应，很自然的反应是再点一次——
+            如果接口不幂等，这一次重试就产生两条重复记录，而重复数据会直接污染后续的汇总统计，
+            且很难被发现（统计结果只是偏大，看不出异常）。</dd>
+          <dt>放弃了什么</dt>
+          <dd>一点点灵活性。幂等键一旦生成就不能重复使用，某些「先提交后修改」的操作需要走单独的更新路径，不能靠重复提交实现。</dd>
+          <dt>什么条件下会失效</dt>
+          <dd>如果填报场景是有线网络下的后台操作、不存在重试，幂等的复杂度就没必要承担。
+            <strong>它是被弱网环境逼出来的设计，不是通用最佳实践。</strong></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>六、失败与边界</h2>
+    <p>
+      这一节是这类系统里最少被讲、但最能说明问题的部分——因为生产环境的问题，永远比设计时预想的多。
+    </p>
+
+    <h3>印象最深的一类缺陷：数据质量引发的连锁问题</h3>
+    <p>
+      填报数据入库时，部分字段的实际形态与预期不符——这不是代码 bug，是真实数据的多样性。
+      问题在于这类异常<strong>不会在写入时报错，而是在统计与出表环节才暴露出结果异常</strong>，
+      此时已经很难回溯到是哪一条原始数据造成的。
+    </p>
+    <p>
+      处理方式分两层：写入侧加结构校验，把不合规的数据拦在入口并给出明确提示（而不是静默接受）；
+      统计侧加异常检测，让结果异常时能快速定位到可疑的原始记录。教训是
+      <strong>校验必须前置，事后发现的成本高一个量级。</strong>
+    </p>
+
+    <h3>线上排查与开发阶段的差别</h3>
+    <ul class="rules">
+      <li><span class="k">没有干净环境</span><span>开发时改一行重跑就复现了；生产上不能随便改数据、不能随便重启，定位靠的是日志、数据比对与排除法。</span></li>
+      <li><span class="k">修复要先备份</span><span>数据修复脚本必须先备份再执行，且要能在出错时回退。<strong>直接在生产库上跑 UPDATE 是不可接受的。</strong></span></li>
+      <li><span class="k">缺陷会重复</span><span>同一个字段的问题修过一次，换个入口又出现。根因往往不在具体的接口，而在缺少统一的校验层——修一处不解决问题，得修架构。</span></li>
+    </ul>
+
+    <div class="note edge">
+      <p><strong>已知不足。</strong>指标配置化牺牲了类型安全，配置错误只能在运行时发现；
+        数据可见性的过滤分散在多个查询入口，靠规范约束而非强制机制保证一致性——
+        这是当前结构下最容易出问题的地方，如果能重做会把这层过滤下沉到统一的数据访问层。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>七、链接与状态</h2>
+    <div class="table-scroll">
+      <table>
+        <tbody>
+          <tr><th>状态</th><td><strong>已上线运行，省级公开成果</strong></td></tr>
+          <tr><th>源码</th><td>不公开——内部生产系统，源码与业务数据受约束</td></tr>
+          <tr><th>可提供的</th><td>以上技术形态与设计说明；移动端可由公开渠道扫码体验</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note edge">
+      <p>
+        内部生产系统，源码与业务数据不公开。以上为公开展示范围内的方法说明——
+        不含具体指标口径、业务数据、原始台账与内部后台画面。
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

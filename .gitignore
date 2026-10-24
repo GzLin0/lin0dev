@@ -1,0 +1,18 @@
+# 白名单式忽略：根目录下只有下面几项进仓库，其余一律不进。
+# 要新增可公开的目录，必须在这里显式放行，否则会被静默忽略。
+
+/*
+!/site/
+!/README.md
+!/LICENSE
+!/.gitignore
+!/.github/
+
+# 兜底
+*.log
+*.tmp
+__pycache__/
+.venv/
+*.pyc
+.DS_Store
+Thumbs.db

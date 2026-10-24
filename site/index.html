@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>李俊霖 · 全栈与 AI 应用工程</title>
+<meta name="description" content="用技术拆解复杂业务问题并实现落地。全栈开发、Agent 与工作流编排、数据治理与批量计算。">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a class="brand" href="/">李俊霖 <span class="faint" style="font-weight:400">/ lin0dev</span></a>
+    <div class="links">
+      <a href="/" class="active">首页</a>
+      <a href="/projects/" class="hide-sm">作品</a>
+      <a href="/notes/" class="hide-sm">笔记</a>
+      <a href="https://gitee.com/li-junlin0" target="_blank" rel="noopener">仓库</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-role">全栈开发 · AI 应用工程</div>
+    <h1>李俊霖 <span class="thin">/ Lin</span></h1>
+    <p class="hero-sub">
+      用技术拆解复杂业务问题并实现落地。<strong>技术是主语，业务是宾语</strong>——
+      我关心的是怎么把含糊的诉求建模成数据结构、计算流程与编排图，再让它稳定跑起来。
+    </p>
+    <div class="hero-meta">
+      <span><i class="dot"></i>广州，在职寻求机会</span>
+      <span><i class="dot amber"></i>目标：AI 应用工程师 / 全栈工程师</span>
+      <span class="nowrap">Python · TypeScript 双栈</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>作品</h2>
+    <p class="sec-lead">
+      四项已完成的工程，按「能不能亲手点开」排序。能跑的放前面，最有深度的紧跟其后。
+    </p>
+    <div class="cards two">
+
+      <a class="card" href="/projects/platform/">
+        <div class="card-top">
+          <span class="card-idx">01</span>
+          <span class="tag live">可体验</span>
+        </div>
+        <h3>城市体检数据管理平台</h3>
+        <p>双端生产系统。移动端做调研数据采集与板块填报，网页端做指标配置、多层级权限、数据汇聚与一键导出。省级成果，多级组织树五级联动。</p>
+        <ul>
+          <li>元数据驱动的指标配置：新增指标不改代码</li>
+          <li>审核状态机：草稿 / 待审 / 退回 / 通过，意见回传闭环</li>
+          <li>RBAC 加数据行级权限，组织层级决定可见范围</li>
+          <li>异构填报数据的汇聚管道与结构校验</li>
+        </ul>
+        <div class="card-foot">
+          参与研发：两端全流程梳理与开发、数据结构与字段设计、数据库运维与缺陷修复<br>
+          内部生产系统，源码与业务数据不公开
+        </div>
+      </a>
+
+      <a class="card" href="/projects/multi-agent/">
+        <div class="card-top">
+          <span class="card-idx">02</span>
+          <span class="tag private">内部项目</span>
+        </div>
+        <h3>多智能体协作系统</h3>
+        <p>用多智能体生成长文分析产出的编排系统。核心不是让模型写得更多，而是让产出可验证、可复算、可回归。</p>
+        <ul>
+          <li>LangGraph 编排 planner → gov → res → judge 主流程</li>
+          <li>五组 Pydantic 数据契约，阶段间只认契约不认自由文本</li>
+          <li>独立规则引擎作为硬约束层，架构上不可被模型绕过</li>
+          <li>完整评测体系：阈值门禁、离线 A/B、基线对比、基准报告</li>
+        </ul>
+        <div class="card-foot">
+          330 文件 / 7 个阶段 / 19 篇计划 + 6 份规格 + 9 篇评审<br>
+          单位课题，源码不公开
+        </div>
+      </a>
+
+      <a class="card" href="/projects/longform/">
+        <div class="card-top">
+          <span class="card-idx">03</span>
+          <span class="tag soon">待上线</span>
+        </div>
+        <h3>长文结构化生成编排服务</h3>
+        <p>把一份多章节长文的生成拆成有依赖关系的节点图，每章独立可中断、可续写，改动只向下游传播。</p>
+        <ul>
+          <li>LangGraph 多章节节点编排，checkpoint 支持中断续写</li>
+          <li>章节间上下文传递，避免前后口径漂移</li>
+          <li>失效传播：单章变更只重算下游，不做全量重跑</li>
+          <li>29 个 prompt 资产化，与代码解耦</li>
+        </ul>
+        <div class="card-foot">
+          Python 后端 + Vue3 / TS 前端，SSE 流式输出<br>
+          整理完成后开放可试用的入口
+        </div>
+      </a>
+
+      <a class="card" href="/projects/admin/">
+        <div class="card-top">
+          <span class="card-idx">04</span>
+          <span class="tag private">内部项目</span>
+        </div>
+        <h3>模块化后台管理系统</h3>
+        <p>在既有的大型代码库上做二次开发，把系统 / 监控 / 业务三层模块解耦，用插件化清单管理扩展点。</p>
+        <ul>
+          <li>FastAPI + SQLAlchemy + Alembic 十三条版本化迁移</li>
+          <li>插件化 manifest，扩展不改核心</li>
+          <li>二十余个功能模块，Docker 交付</li>
+          <li>权限模型与操作审计</li>
+        </ul>
+        <div class="card-foot">
+          2272 文件的既有代码库上二次开发<br>
+          业务系统，源码与界面不公开
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>技术栈</h2>
+    <p class="sec-lead">
+      标蓝的是一线在用的；虚线框的是正在补、只到「了解」程度的——这门手艺上，说清楚边界比堆名词可信。
+    </p>
+    <div class="stack">
+
+      <div class="stack-row">
+        <div class="stack-label">语言</div>
+        <div class="pills">
+          <span class="pill strong">Python</span>
+          <span class="pill strong">TypeScript</span>
+          <span class="pill">JavaScript</span>
+          <span class="pill">SQL</span>
+          <span class="pill learn">Java</span>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-label">后端</div>
+        <div class="pills">
+          <span class="pill strong">FastAPI</span>
+          <span class="pill">Pydantic</span>
+          <span class="pill">SQLAlchemy</span>
+          <span class="pill">Alembic</span>
+          <span class="pill">REST / SSE</span>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-label">Agent 与 AI</div>
+        <div class="pills">
+          <span class="pill strong">LangGraph</span>
+          <span class="pill">Agent 编排</span>
+          <span class="pill">Prompt 资产化</span>
+          <span class="pill">LLM 评测与门禁</span>
+          <span class="pill">规则引擎</span>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-label">前端</div>
+        <div class="pills">
+          <span class="pill strong">Vue 3</span>
+          <span class="pill">Element Plus</span>
+          <span class="pill">Vite</span>
+          <span class="pill">微信小程序</span>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-label">数据</div>
+        <div class="pills">
+          <span class="pill strong">MySQL</span>
+          <span class="pill">PostgreSQL</span>
+          <span class="pill">PostGIS</span>
+          <span class="pill">多源数据治理</span>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-label">交付与运维</div>
+        <div class="pills">
+          <span class="pill strong">Docker</span>
+          <span class="pill">Docker Compose</span>
+          <span class="pill">Nginx</span>
+          <span class="pill">Linux</span>
+          <span class="pill">Git</span>
+          <span class="pill learn">CI / CD 流水线</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>这个站</h2>
+    <p class="sec-lead">
+      站本身就是一件作品，而且是唯一一件你能从头看到尾的作品——包括它是怎么上线的。
+    </p>
+    <div class="note">
+      <p><strong>搭建与部署。</strong>站跑在一台自己的云服务器上，Nginx 承载静态页面，容器化跑需要长期运行的服务。域名、解析、备案、HTTPS 这条链走完整了一遍。</p>
+      <p><strong>从提交到上线。</strong>代码推到仓库后由流水线完成构建与部署，镜像用提交号打标而不是 <code>latest</code>——为了能回滚、能追溯线上跑的到底是哪个版本。</p>
+      <p><strong>为什么会写这些。</strong>一个能跑的东西和一个能讲清「为什么这么写」的东西，不是一回事。这个站的每一页都想把后一半写出来：选了什么、放弃了什么、什么情况下会失效。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>几条自我约束</h2>
+    <ul class="rules">
+      <li><span class="k">不讲行业业务</span><span>作品一律按技术命名，只讲建模与工程实现。读者看完应该知道我能处理什么工程问题，而不是我懂哪个行业。</span></li>
+      <li><span class="k">数字要能验证</span><span>只写结构性数字——文件数、模块数、迁移条数、节点数。没有实测过的性能数字不写。</span></li>
+      <li><span class="k">边界如实标注</span><span>内部项目写明源码不公开及原因；只到「了解」的技术不冒充「熟悉」。缺什么就说缺什么。</span></li>
+      <li><span class="k">失败也算素材</span><span>部署失败与回滚、评测里挂掉的用例、口径对不上的边角，这些比十个成功案例更能说明问题。</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>李俊霖 · lin0dev.tech</span>
+      <span class="sep">·</span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026141711号</a>
+      <span class="sep">·</span>
+      <a href="https://beian.mps.gov.cn/" target="_blank" rel="noopener">粤公网安备44010602017360号</a>
+      <span class="sep">·</span>
+      <span>本站由个人独立开发与运维</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
